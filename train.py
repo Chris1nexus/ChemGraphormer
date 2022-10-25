@@ -35,7 +35,6 @@ def parse_args(args=None):
     parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
     parser.add_argument("--beta1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--beta2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
-    parser.add_argument("--decay_epoch", type=int, default=100, help="epoch from which to start lr decay")
     parser.add_argument("--num_workers", type=int, default=8, help="Number of CPU threads to use during batch generation")
     
     parser.add_argument("--fp16", action="store_true", help="If passed, will use FP16 training.")
@@ -58,7 +57,6 @@ def parse_args(args=None):
         type=str,
         help="Entity name to push to the wandb logged data, in case args.wandb is specified.",
     )    
-    parser.add_argument("--output_dir", type=Path, default=Path("./output"), help="Name of the directory to dump generated images and models separately, during training.")
     return parser.parse_args(args=args)
 
 def main(args):
@@ -84,10 +82,10 @@ def main(args):
 
 
     model = GCN(hidden_channels=args.hidden_channels, node_emb_dim=args.node_emb, edge_emb_dim=args.edge_emb)
-    train_loader = loader.DataLoader(dataset[train_idx], batch_size=args.batch_size, shuffle=True)
-    val_loader = loader.DataLoader(dataset[valid_idx], batch_size=args.batch_size)
-    test_dev_loader = loader.DataLoader(dataset[testdev_idx], batch_size=args.batch_size)
-    test_challenge_loader = loader.DataLoader(dataset[testchallenge_idx], batch_size=args.batch_size)
+    train_loader = loader.DataLoader(dataset[train_idx], batch_size=args.batch_size, shuffle=True, num_workers=num_workers)
+    val_loader = loader.DataLoader(dataset[valid_idx], batch_size=args.batch_size, num_workers=num_workers)
+    test_dev_loader = loader.DataLoader(dataset[testdev_idx], batch_size=args.batch_size, num_workers=num_workers)
+    test_challenge_loader = loader.DataLoader(dataset[testchallenge_idx], batch_size=args.batch_size, num_workers=num_workers)
 
 
 
@@ -100,7 +98,7 @@ def main(args):
     else:
         criterion = torch.nn.MSELoss()
 
-    def train():
+    def train(args):
         model.train()
 
         for iter, data in enumerate(train_loader,1):  # Iterate in batches over the training dataset.
@@ -113,7 +111,7 @@ def main(args):
             #loss.backward()  # Derive gradients.
             optimizer.step()  # Update parameters based on gradients.
             optimizer.zero_grad()  # Clear gradients.
-            if accelerator.is_local_main_process:
+            if accelerator.is_local_main_process and args.wandb:
                 wandb.log({'Train {args.criterion} loss: ': loss.item() })
     def test(loader):
         model.eval()
@@ -142,7 +140,7 @@ def main(args):
 
 
     for epoch in range(1, args.num_epochs+1):
-        train()
+        train(args)
         train_metrics = test(train_loader)
         test_metrics = test(val_loader)
         if accelerator.is_local_main_process:
