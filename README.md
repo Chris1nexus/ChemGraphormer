@@ -19,6 +19,10 @@ This will prompt a set of questions in order to properly set up the multi gpu tr
 It is important to answer to the question 'How many processes in total will you use?' with the number of gpus that will be employed during training.
 Otherwise the library fails to properly configure the environment for multi gpu training(this holds for accelerate 0.6.2, other versions might be subject to changes).
 
+## Dataset 
+As shown on the website of the [OGB challenge](https://ogb.stanford.edu/docs/lsc/pcqm4mv2/), the website can be automatically downloaded by means of the ogb library.
+Natively this code will download or search for such data at the location pointed by the path given as --root_dir command line argument.
+
 ## How to run training
 To reap the benefits of distributed training the following has to be run after `accelerate config` is.
 ```
