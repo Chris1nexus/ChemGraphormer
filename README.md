@@ -9,7 +9,7 @@ Install the base requirements by running
 pip install -r requirements.txt
 ```
 The project also need pytorch (preferably the gpu version).
-To find the version that suits your system, visit the official pytorch website (https://pytorch.org/get-started/locally/) 
+To find the version that suits your system, visit the official [pytorch website](https://pytorch.org/get-started/locally/) 
 Furthermore, this project supports multi-gpu multi-machine training by means of the **accelerate** library.
 To set it up, after the installation of accelerate by means of pip, run 
 ```
